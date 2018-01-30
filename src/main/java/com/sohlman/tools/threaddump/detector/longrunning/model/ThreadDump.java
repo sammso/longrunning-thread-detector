@@ -15,7 +15,7 @@ import com.sohlman.tools.threaddump.util.Util;
 
 public class ThreadDump {
 	public ThreadDump(File file) throws FileNotFoundException, IOException {
-		this(FileUtil.readFile(file), file.getName(), file.getAbsolutePath());
+		this(FileUtil.readFile(file), file.getName(),file.getAbsolutePath());
 	}
 	
 	public Date getDate() {
@@ -54,7 +54,7 @@ public class ThreadDump {
 					int size = threadEnd - oldThreadStart + 1;
 					String[] threadLines = new String[size];
 					System.arraycopy(lines, oldThreadStart, threadLines, 0, size);
-					Thread thread = new Thread(threadLines);
+					Thread thread = new Thread(name, this.date, threadLines);
 					threads.add(thread);
 					threadMap.put(thread.getName(), thread);
 				}
@@ -81,21 +81,25 @@ public class ThreadDump {
 		return threads;
 	}
 	
-	public void printMatchReport(ThreadDump otherThreadDump, String nameFilter, String filter, PrintStream out) {
+	public Map<String, ThreadHistory> matchReport(ThreadDump earlierThread, String nameFilter, String filter, int requiredSimilarity, int minLineCount, PrintStream out) {
+		
+		Map<String, ThreadHistory> map = new HashMap<>();
 		for (Thread thread : threads )  {
 			if (thread.contains(filter)) {
 				
 				if (thread.getName().contains(nameFilter)) {
-					Thread otherThread = otherThreadDump.getByName(thread.getName());
+					Thread otherThread = earlierThread.getByName(thread.getName());
 					if (otherThread!=null) {
-						CompareReport compareReport = thread.countComparePromille(otherThread);
-						if (compareReport.promille>100) {
-							out.println(String.format("%s - %s : \"%s\" similarity: %d length: %d line: %s", getFullName(), otherThreadDump.getName(), thread.getName(), compareReport.promille, thread.getStackTraceLines().length, compareReport.line));
+						CompareReport compareReport = thread.compareReport(otherThread);
+						if (compareReport.promille>=requiredSimilarity && compareReport.minLineCount >= minLineCount) {
+							map.put(thread.getName(), new ThreadHistory(otherThread, thread));
+							//out.println(String.format("%s - %s : \"%s\" similarity: %d length: %d line: %s", getFullName(), earlierThread.getName(), thread.getName(), compareReport.promille, thread.getStackTraceLines().length, compareReport.line));
 						}
 					}
 				}
 			}
 		}
+		return map;
 	}
 	
 	private Thread[] threads;

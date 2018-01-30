@@ -1,19 +1,44 @@
 package com.sohlman.tools.threaddump.detector.longrunning.model;
 
+import java.util.Date;
+
 public class Thread {
-	public Thread(String[] lines) { 
+	public Thread(String fileName, Date date, String[] lines) { 
 		if ( !lines[0].startsWith("\"")) {
 			throw new IllegalArgumentException("First line starts with \" value");
 		}
 		if ( lines[0].indexOf("\"",1)==-1 ) {
 			throw new IllegalArgumentException("No termination \" found .. No noname : '" + lines[0] + "'");
 		}
-		
+		this.fileName = fileName;
 		this.lines = lines;
+		this.date = date;
 	}
 	
 	public String getName() {
 		return getName(lines[0]);
+	}
+	
+	public Date getThreadDumpDate() {
+		return this.date;
+	}
+	
+	/**
+	 * Returns millisSecond value of the threaddump time or Long.MIN_VALUE if failed to parsed.
+	 * 
+	 * @return
+	 */
+	public long getThreadDumpDateMillis() {
+		if (this.date==null) {
+			return Long.MIN_VALUE;
+		}
+		else {
+			return this.date.getTime();
+		}
+	}
+	
+	public String getFileName() {
+		return this.fileName;
 	}
 	
 	public boolean isSameThread(Thread thread) {
@@ -29,16 +54,17 @@ public class Thread {
 		return false;
 	}
 	
-	public CompareReport countComparePromille(Thread thread) {
+	public CompareReport compareReport(Thread thread) {
 		String[] thisLines = getStackTraceLines();
 		String[] threadLines = thread.getStackTraceLines();
 		
-		int maxRowCount = Math.max(thisLines.length, threadLines.length);
-		int minRowCount = Math.min(thisLines.length, threadLines.length);
+		int maxLineCount = Math.max(thisLines.length, threadLines.length);
+		int minLineCount = Math.min(thisLines.length, threadLines.length);
 		
 		int equalNumber=0;
 		
 		String lastEqualLine = null;
+		String lastSignificantLine = null;
 		
 		for (int thisCounter = thisLines.length - 1, threadCounter = threadLines.length - 1 ;  
 				thisCounter >=0 && threadCounter >=0 ; 
@@ -49,6 +75,11 @@ public class Thread {
 			
 			if (thisLine.equals(threadLine)) {
 				lastEqualLine = thisLine;
+				
+				if (!(lastEqualLine.indexOf("at java.")>=0 || lastEqualLine.indexOf("at sun.")>=0)) {
+					lastSignificantLine = lastEqualLine;
+				}
+				
 				equalNumber++;
 			}
 			else {
@@ -56,7 +87,11 @@ public class Thread {
 			}
 		}
 		
-		return new CompareReport(lastEqualLine,  (equalNumber * 1000) / maxRowCount);
+		// Fetch last 
+		
+		
+		
+		return new CompareReport(lastEqualLine, lastSignificantLine,  (equalNumber * 1000) / maxLineCount, minLineCount);
 	}
 	
 	public String[] getStackTraceLines() {
@@ -85,7 +120,9 @@ public class Thread {
 	protected String getName(String name) {
 		return name.substring(name.indexOf('"') + 1, name.indexOf("\"",1));
 	}	
-
+	
+	private Date date;
+	private String fileName;
 	private String[] lines;
 	private String[] stackTraceRows;
 }
