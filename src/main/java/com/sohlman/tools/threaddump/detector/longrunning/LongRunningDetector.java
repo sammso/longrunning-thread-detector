@@ -57,14 +57,14 @@ public class LongRunningDetector {
 					for ( Entry<String, ThreadHistory> entry : longRunningThreadPairMap.entrySet() ) {
 						
 						ThreadHistory threadHistory = entry.getValue();
-						String threadName = threadHistory.getFirst().getName();
-						List<ThreadHistory> threadHistoryList = historyThreadMap.get(threadName);
+						String threadTid = threadHistory.getFirst().getTid();
+						List<ThreadHistory> threadHistoryList = historyThreadMap.get(threadTid);
 						
 						if ( threadHistoryList==null ) {
 							 
 							threadHistoryList = new LinkedList<>();
 							threadHistoryList.add(entry.getValue());							
-							historyThreadMap.put(threadName, threadHistoryList);
+							historyThreadMap.put(threadTid, threadHistoryList);
 						}
 						else {
 							ThreadHistory threadHistoryExisting = threadHistoryList.get(threadHistoryList.size() - 1);
@@ -80,10 +80,10 @@ public class LongRunningDetector {
 				}
 			}
 		}
-		System.out.println("Time\tSeconds\tThreadName\tSimilarity\tLinecountt\tsiginificant line\tfiles");
+		System.out.println("Time\tSeconds\tThreadName\tTid\tSimilarity\tLinecountt\tsiginificant line\tfiles");
 		
-		String plainFormat = "%s\t%d\t\"%s\"\t%d\t%d\t%s\t";
-		String explainFormat = "%s\t%d s\t\"%s\"\ttotal-similarity: %d\tlines: %d\tline: %s\t";
+		String plainFormat = "%s\t%d\t\"%s\"\t%s\t%d\t%d\t%s\t";
+		String explainFormat = "%s\t%d s\t\"%s\"\t%s\ttotal-similarity: %d\tlines: %d\tline: %s\t";
 		
 		for (Entry<String, List<ThreadHistory>> entry : historyThreadMap.entrySet()) {
 			String threadName = entry.getKey();
@@ -95,7 +95,7 @@ public class LongRunningDetector {
 				
 				CompareReport compareReport = first.compareReport(last);
 				
-				System.out.print(String.format(plainFormat, Util.dateToString(first.getThreadDumpDate()), ((last.getThreadDumpDateMillis() - first.getThreadDumpDateMillis())/1000), last.getName(), compareReport.promille,last.getStackTraceLines().length, compareReport.lastSignificantLine));
+				System.out.print(String.format(plainFormat, Util.dateToString(first.getThreadDumpDate()), ((last.getThreadDumpDateMillis() - first.getThreadDumpDateMillis())/1000), last.getName(), last.getTid(), compareReport.promille,last.getStackTraceLines().length, compareReport.lastSignificantLine));
 				Iterator<Thread> iterator = threadHistory.iterator();
 				
 				String space = "";

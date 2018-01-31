@@ -40,9 +40,19 @@ public class ThreadTest {
 	public void testThreadName() throws Exception {
 		String fileNameAndPath = "/com/sohlman/tools/threaddump/detector/longrunning/model/thread1.log";
 		Thread thread1 = new Thread(fileNameAndPath, new Date(),FileUtil.readFileUTF8(
-				getClass().getResourceAsStream("/com/sohlman/tools/threaddump/detector/longrunning/model/thread1.log")));
+				getClass().getResourceAsStream(fileNameAndPath)));
 
 		Assert.assertEquals(thread1.getName(), "localhost-startStop-1");
 	}	
+
+	
+	@Test
+	public void testThreadTid() throws Exception {
+		String fileNameAndPath = "/com/sohlman/tools/threaddump/detector/longrunning/model/thread1.log";
+		Thread thread1 = new Thread(fileNameAndPath, new Date(),FileUtil.readFileUTF8(
+				getClass().getResourceAsStream(fileNameAndPath)));
+
+		Assert.assertEquals(thread1.getTid(), "0x00007fd16c1fe000");
+	}
 	
 }

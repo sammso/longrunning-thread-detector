@@ -56,7 +56,8 @@ public class ThreadDump {
 					System.arraycopy(lines, oldThreadStart, threadLines, 0, size);
 					Thread thread = new Thread(name, this.date, threadLines);
 					threads.add(thread);
-					threadMap.put(thread.getName(), thread);
+					threadNameMap.put(thread.getName(), thread);
+					threadTidMap.put(thread.getTid(), thread);
 				}
 			}
 		}
@@ -74,25 +75,29 @@ public class ThreadDump {
 	}
 	
 	public Thread getByName(String name) {
-		return this.threadMap.get(name);
+		return this.threadNameMap.get(name);
+	}
+	
+	public Thread getByTid(String tid) {
+		return this.threadTidMap.get(tid);
 	}
 	
 	public Thread[] getThreads() {
 		return threads;
 	}
 	
-	public Map<String, ThreadHistory> matchReport(ThreadDump earlierThread, String nameFilter, String filter, int requiredSimilarity, int minLineCount, PrintStream out) {
+	public Map<String, ThreadHistory> matchReport(ThreadDump earlierThreadDump, String nameFilter, String filter, int requiredSimilarity, int minLineCount, PrintStream out) {
 		
 		Map<String, ThreadHistory> map = new HashMap<>();
 		for (Thread thread : threads )  {
 			if (thread.contains(filter)) {
 				
 				if (thread.getName().contains(nameFilter)) {
-					Thread otherThread = earlierThread.getByName(thread.getName());
-					if (otherThread!=null) {
-						CompareReport compareReport = thread.compareReport(otherThread);
+					Thread earlierThread = earlierThreadDump.getByTid(thread.getTid());
+					if (earlierThread!=null) {
+						CompareReport compareReport = thread.compareReport(earlierThread);
 						if (compareReport.promille>=requiredSimilarity && compareReport.minLineCount >= minLineCount) {
-							map.put(thread.getName(), new ThreadHistory(otherThread, thread));
+							map.put(thread.getTid(), new ThreadHistory(earlierThread, thread));
 							//out.println(String.format("%s - %s : \"%s\" similarity: %d length: %d line: %s", getFullName(), earlierThread.getName(), thread.getName(), compareReport.promille, thread.getStackTraceLines().length, compareReport.line));
 						}
 					}
@@ -103,7 +108,8 @@ public class ThreadDump {
 	}
 	
 	private Thread[] threads;
-	private Map<String, Thread> threadMap = new HashMap<>();
+	private Map<String, Thread> threadNameMap = new HashMap<>();
+	private Map<String, Thread> threadTidMap = new HashMap<>();
 	private String name = null;
 	private String fullName = null;
 	private Date date = null;

@@ -19,6 +19,12 @@ public class Thread {
 		return getName(lines[0]);
 	}
 	
+	public String getTid() {
+		int startOfTid = lines[0].indexOf(_TID_STRING) + _TID_STRING.length();
+		int endOfTid = lines[0].indexOf(' ', startOfTid);
+		return lines[0].substring(startOfTid, endOfTid);
+	}
+	
 	public Date getThreadDumpDate() {
 		return this.date;
 	}
@@ -61,6 +67,8 @@ public class Thread {
 		int maxLineCount = Math.max(thisLines.length, threadLines.length);
 		int minLineCount = Math.min(thisLines.length, threadLines.length);
 		
+		long secondsBetweenDumps = ( this.getThreadDumpDateMillis() - thread.getThreadDumpDateMillis() ) / 1000;
+		
 		int equalNumber=0;
 		
 		String lastEqualLine = null;
@@ -91,7 +99,7 @@ public class Thread {
 		
 		
 		
-		return new CompareReport(lastEqualLine, lastSignificantLine,  (equalNumber * 1000) / maxLineCount, minLineCount);
+		return new CompareReport(lastEqualLine, lastSignificantLine,  (equalNumber * 1000) / maxLineCount, minLineCount, secondsBetweenDumps);
 	}
 	
 	public String[] getStackTraceLines() {
@@ -125,4 +133,6 @@ public class Thread {
 	private String fileName;
 	private String[] lines;
 	private String[] stackTraceRows;
+	
+	private static final String _TID_STRING = "tid=";
 }
